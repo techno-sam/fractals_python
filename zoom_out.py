@@ -2,7 +2,14 @@ import os
 import random
 import time
 
-initial_zoom = my_zoom = (-0.7494430777229307, -0.04039854268783832, -0.7494430777228285, -0.04039854268773604)
+"""
+(-0.7494430777229307, -0.04039854268783832, -0.7494430777228285, -0.04039854268773604)
+(-1.1526604028060814, -0.30695505685455265, -1.1526604028056786, -0.3069550568541498)
+(-0.1528374138507328, -1.0400350850739863, -0.15283741385027563, -1.0400350850735292)
+(-1.8112662371017072, -2.3424589762138185e-10, -1.8112662366795607, 1.8790057629187405e-10)
+"""
+
+initial_zoom = my_zoom = (-1.8112662371017072, -2.3424589762138185e-10, -1.8112662366795607, 1.8790057629187405e-10)
 target_zoom = (-2.5, -2, 1.5, 2)
 from multiprocessing import Pool
 
@@ -86,6 +93,6 @@ with Pool(thread_count) as p:
 print("Threads finished")
 print("Generating video")
 
-os.system(r'cd frames && ffmpeg -framerate 30 -pattern_type glob -i "*.png" -c:v libx264 -pix_fmt yuv420p out.mp4 && cd ..')
+os.system(f'cd frames && ffmpeg -framerate 30 -pattern_type glob -i "*.png" -c:v libx264 -pix_fmt yuv420p "{time.time()}.mp4" && mv *.mp4 ../outputs/ && cd ..')
 
 print("Done")
