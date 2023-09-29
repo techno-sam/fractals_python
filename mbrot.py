@@ -20,9 +20,11 @@ y_new += y
 f(f(f(0)))
 
 """
+import math
 
 import pygame
 from deque_practice import Deque
+import colorization_test_provider
 import colorsys
 pygame.init()
 
@@ -92,7 +94,7 @@ try:
 #    raise ImportError
 except ImportError:
     print("warning: optimization library not found")
-    def point(x, y, escape) -> int:
+    def point(x, y, escape) -> tuple[int, float, float]:
         #x, y = map_pixel(x, y, 800, 800, zoom)
         curr_x = x
         curr_y = y
@@ -105,9 +107,9 @@ except ImportError:
             curr_x += x
             curr_y += y
             if absolute(curr_x, curr_y) > 2:
-                return iters
+                return iters, curr_x, curr_y
 
-        return -1
+        return -1, curr_x, curr_y
 
     def path(x, y, escape) -> tuple[tuple[float, float]]:
         #x, y = map_pixel(x, y, 800, 800, zoom)
@@ -149,15 +151,21 @@ def rainbow(iters, max_iters, dimmer=False) -> tuple[int, int, int]:
         return tuple([int(v*255) for v in colorsys.hsv_to_rgb(iters/max_iters, 1*mul, 1)]) # noqa
 
 
-def color(x, y, zoom_coords) -> tuple[int, int, int]:
-    escape = 1000
+def color(x, y, zoom_coords, escape: int = 1000) -> tuple[int, int, int]:
+    # escape = 1000
     x, y = map_pixel(x, y, 800, 800, zoom_coords)
-    p = point(x, y, escape)
+    p, final_x, final_y = point(x, y, escape)
     #print(p)
-    return (0, 0, 0) if p == -1 else rainbow(p, 500)
+    try:
+        return (0, 0, 0) if p == -1 else colorization_test_provider.color(p, final_x, final_y, x, y)#rainbow(math.log(p), 10)
+    except ValueError:
+        try:
+            return rainbow(p, 10)
+        except ValueError:
+            return 255, 255, 255
 
 
-def draw(zoom_coords: tuple[float]|list[float], surf: pygame.Surface, w: int = 800, h: int = 800):
+def draw(zoom_coords: tuple[float]|list[float], surf: pygame.Surface, w: int = 800, h: int = 800, escape: int = 1000):
     if path_mode:
         print("Starting path drawing")
         #all_pts_r: list[list[int]] = []
@@ -214,9 +222,24 @@ def draw(zoom_coords: tuple[float]|list[float], surf: pygame.Surface, w: int = 8
                 pygame.display.update()
         print("Done")
     else:
+        avg_escape = 0
+        avg_count = 0
+        y_x = []
+        for cy in range(h):
+            row = []
+            y_x.append(row)
+            for cx in range(w):
+                mx_, my_ = map_pixel(cy, cx, w, h, zoom_coords)
+                it, fx, fy = point(mx_, my_, escape)
+                row.append((it, fx, fy))
+                if it != -1:
+                    avg_escape += it
+                    avg_count += 1
+#                surf.set_at((cx, cy), color(cx, cy, zoom_coords, escape=escape))
+        avg_escape /= avg_count
         for cx in range(w):
             for cy in range(h):
-                surf.set_at((cx, cy), color(cx, cy, zoom_coords))
+                surf.set_at((cx, cy), colorization_test_provider.color(*y_x[cy][cx], cx, cy, avg_escape))
             if cx%10 == 0 and surf == screen:
                 pygame.display.update()
 
@@ -243,6 +266,8 @@ screen_bkp = pygame.Surface((screen.get_width(), screen.get_height()))
 
 
 if __name__ == "__main__":
+    iter_count = 1000
+    old_iter_count = iter_count
     while kg:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -353,10 +378,18 @@ if __name__ == "__main__":
                     tracer_points = not tracer_points
                 elif event.key == pygame.K_o:
                     print(f"{zoom=}")
-        if prev_zoom != zoom or prev_path_mode != path_mode:
+                elif event.key == pygame.K_EQUALS:
+                    iter_count *= 10
+                    print(f"New iter count: {iter_count}")
+                elif event.key == pygame.K_MINUS:
+                    iter_count /= 10
+                    iter_count = int(iter_count)
+                    print(f"New iter count: {iter_count}")
+        if prev_zoom != zoom or prev_path_mode != path_mode or iter_count != old_iter_count:
             prev_zoom = zoom
             prev_path_mode = path_mode
-            draw(zoom, screen)
+            draw(zoom, screen, escape=iter_count)
+            old_iter_count = iter_count
             screen_bkp.blit(screen, (0, 0))
 
     pygame.quit()

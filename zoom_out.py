@@ -27,10 +27,16 @@ def interp_multi(a, b, factor):
 
 frame = 0
 
+existing = set()
+for fname in os.listdir("frames"):
+    if ".png" in fname:
+        existing.add(int(fname.replace(".png", "")))
+
 zooms: list[tuple[int, list[float]]] = []
 
 while (my_zoom[0] - my_zoom[2])**2 + (my_zoom[1] - my_zoom[3])**2 < 25:
-    zooms.append((frame, my_zoom))
+    if frame not in existing:
+        zooms.append((frame, my_zoom))
     #s.fill((0, 0, 0))
     #mbrot.draw(my_zoom, s)
 
@@ -58,7 +64,7 @@ def generate_frames(frame_set: list[tuple[int, list[float]]]):
         print(f"{id_} generating frame {frame_id}")
         s.fill((0, 0, 0))
         print(f"{id_} filled frame {frame_id}")
-        mbrot.draw(z, s)
+        mbrot.draw(z, s, escape=1_000)
         print(f"{id_} generated frame {frame_id}")
         pygame.image.save(s, f"frames/{frame_id:03}.png")
     print(f"Quitting {id_}")
