@@ -35,7 +35,7 @@ screen = pygame.display.set_mode((dim, dim))
 while True:
     print("Starting to draw")
     importlib.reload(colorization_test_provider)
-    colorization_test_provider.draw(dim, pygame, screen, y_x)
+    colorization_test_provider.draw(dim, pygame, screen, y_x, display_update=True)
     print("Done drawing")
     """for y in range(dim):
         pygame.display.update()

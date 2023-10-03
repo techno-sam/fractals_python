@@ -21,6 +21,7 @@ f(f(f(0)))
 
 """
 import math
+import time
 
 import pygame
 from deque_practice import Deque
@@ -141,6 +142,9 @@ use_hls = False
 path_mode = False
 prev_path_mode = path_mode
 tracer_points = False
+tracer_julia = False
+just_juliad = False
+just_juliad_end = None
 
 
 def rainbow(iters, max_iters, dimmer=False) -> tuple[int, int, int]:
@@ -157,7 +161,7 @@ def color(x, y, zoom_coords, escape: int = 1000) -> tuple[int, int, int]:
     p, final_x, final_y = point(x, y, escape)
     #print(p)
     try:
-        return (0, 0, 0) if p == -1 else colorization_test_provider.color(p, final_x, final_y, x, y)#rainbow(math.log(p), 10)
+        return (0, 0, 0) if p == -1 else rainbow(p, 500)
     except ValueError:
         try:
             return rainbow(p, 10)
@@ -222,26 +226,36 @@ def draw(zoom_coords: tuple[float]|list[float], surf: pygame.Surface, w: int = 8
                 pygame.display.update()
         print("Done")
     else:
-        avg_escape = 0
-        avg_count = 0
-        y_x = []
-        for cy in range(h):
-            row = []
-            y_x.append(row)
+        if __name__ == "__main__" and False:
             for cx in range(w):
-                mx_, my_ = map_pixel(cy, cx, w, h, zoom_coords)
-                it, fx, fy = point(mx_, my_, escape)
-                row.append((it, fx, fy))
-                if it != -1:
-                    avg_escape += it
-                    avg_count += 1
-#                surf.set_at((cx, cy), color(cx, cy, zoom_coords, escape=escape))
-        avg_escape /= avg_count
-        for cx in range(w):
+                for cy in range(h):
+                    surf.set_at((cx, cy), color(cx, cy, zoom_coords, escape=escape))
+                if cx % 10 == 0 and surf == screen:
+                    pygame.display.update()
+        else:
+            avg_escape = 0
+            avg_count = 0
+            y_x = []
             for cy in range(h):
-                surf.set_at((cx, cy), colorization_test_provider.color(*y_x[cy][cx], cx, cy, avg_escape))
-            if cx%10 == 0 and surf == screen:
-                pygame.display.update()
+                row = []
+                y_x.append(row)
+                for cx in range(w):
+                    mx_, my_ = map_pixel(cx, cy, w, h, zoom_coords)
+                    it, fx, fy = point(mx_, my_, escape)
+                    row.append((it, fx, fy))
+                    if it != -1:
+                        avg_escape += it
+                        avg_count += 1
+    #                surf.set_at((cx, cy), color(cx, cy, zoom_coords, escape=escape))
+            avg_escape /= avg_count
+            if True:
+                colorization_test_provider.draw(800, pygame, surf, y_x, display_update=surf==screen)
+            else:
+                for cx in range(w):
+                    for cy in range(h):
+                        surf.set_at((cx, cy), colorization_test_provider.color(*y_x[cy][cx], cx, cy, avg_escape))
+                    if cx%10 == 0 and surf == screen:
+                        pygame.display.update()
 
     if surf == screen:
         pygame.display.update()
@@ -273,6 +287,7 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:
                 kg = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                just_juliad = False
                 if drag_start is not None:
                     drag_end = pygame.mouse.get_pos()
                     minx, miny = drag_start
@@ -291,6 +306,31 @@ if __name__ == "__main__":
                 else:
                     drag_start = pygame.mouse.get_pos()
             elif event.type == pygame.MOUSEMOTION:
+                if drag_start is None and tracer_julia:
+                    if just_juliad:
+                        continue
+                    just_juliad = True
+                    mx, my = map_pixel(*pygame.mouse.get_pos(), 800, 800, zoom)
+                    screen.fill((0, 0, 0), (800, 0, 800, 800))
+                    maximum = 1
+                    y_x = [[0 for _ in range(800)] for _ in range(800)]
+                    print("Started julia")
+                    pts: tuple[tuple[float, float],...] = path(mx, my, 10_000_000)
+                    for pt in pts:
+                        screen_space = map_pixel_reverse(*pt, 800, 800, orig_zoom)
+                        try:
+                            y_x[screen_space[1]][screen_space[0]] += 1
+                            maximum = max(maximum, y_x[screen_space[1]][screen_space[0]])
+                        except IndexError:
+                            pass
+                    for x in range(800):
+                        for y in range(800):
+                            bright = round((y_x[y][x]/maximum)*255)
+                            screen.set_at((x+800, y), (bright, bright, bright))
+                        pygame.display.update()
+                    print("Finished julia")
+                else:
+                    just_juliad = False
                 if drag_start is not None:
                     drag_end = pygame.mouse.get_pos()
                     minx, miny = drag_start
@@ -360,6 +400,7 @@ if __name__ == "__main__":
                             pygame.draw.line(screen, col, from_pt, to_pt)
                     pygame.display.update()
             elif event.type == pygame.KEYDOWN:
+                just_juliad = False
                 if event.key == pygame.K_BACKSPACE and not zoom_stack.is_empty():
                     zoom = zoom_stack.remove_front()
                 if event.key == pygame.K_ESCAPE and drag_start is not None:
@@ -376,20 +417,31 @@ if __name__ == "__main__":
                     prev_zoom = None
                 elif event.key == pygame.K_p:
                     tracer_points = not tracer_points
+                elif event.key == pygame.K_j:
+                    tracer_julia = not tracer_julia
                 elif event.key == pygame.K_o:
                     print(f"{zoom=}")
-                elif event.key == pygame.K_EQUALS:
+                elif event.key == pygame.K_EQUALS: # +
                     iter_count *= 10
                     print(f"New iter count: {iter_count}")
-                elif event.key == pygame.K_MINUS:
+                elif event.key == pygame.K_MINUS:  # -
                     iter_count /= 10
                     iter_count = int(iter_count)
                     print(f"New iter count: {iter_count}")
+            else:
+                just_juliad = False
         if prev_zoom != zoom or prev_path_mode != path_mode or iter_count != old_iter_count:
             prev_zoom = zoom
             prev_path_mode = path_mode
             draw(zoom, screen, escape=iter_count)
             old_iter_count = iter_count
             screen_bkp.blit(screen, (0, 0))
+
+        if just_juliad:
+            if just_juliad_end is None:
+                just_juliad_end = time.time() + 0.5
+            elif just_juliad_end < time.time():
+                just_juliad_end = None
+                just_juliad = False
 
     pygame.quit()
