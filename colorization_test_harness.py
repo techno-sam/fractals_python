@@ -5,10 +5,10 @@ import importlib
 import colorization_test_provider
 pygame.init()
 
-zoom_coords = (-0.8414203500703239, -0.20850157644901862, -0.8414203121078482, -0.2085015384865429)
+zoom_coords = (-0.7746269311970281, 0.12415248501499525, -0.7746269311875639, 0.1241524850244594)#(-0.8414203500703239, -0.20850157644901862, -0.8414203121078482, -0.2085015384865429)
 # zoom_coords = (-0.22584444085605274, -0.7003014963223264, -0.22584363219101547, -0.7003006876572891)
 dim = 800
-escape = 1000
+escape = 1_000_000
 y_x: list[list[tuple[int, float, float]]] = []
 # list[list[tuple[int, float, float]]]
 if "y" in input("recalculate (Y/n): ").lower():
@@ -35,7 +35,7 @@ screen = pygame.display.set_mode((dim, dim))
 while True:
     print("Starting to draw")
     importlib.reload(colorization_test_provider)
-    colorization_test_provider.draw(dim, pygame, screen, y_x, display_update=True)
+    colorization_test_provider.draw(dim, pygame, screen, y_x, display_update=True, max_iters=escape)
     print("Done drawing")
     """for y in range(dim):
         pygame.display.update()

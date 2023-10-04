@@ -36,6 +36,7 @@ else:
 
 
 zoom = (-2.5, -2, 1.5, 2)  # tuple of min and max coords
+# zoom = (-0.7746269311970281, 0.12415248501499525, -0.7746269311875639, 0.1241524850244594)
 orig_zoom = zoom
 zoom_stack = Deque()
 
@@ -249,7 +250,7 @@ def draw(zoom_coords: tuple[float]|list[float], surf: pygame.Surface, w: int = 8
     #                surf.set_at((cx, cy), color(cx, cy, zoom_coords, escape=escape))
             avg_escape /= avg_count
             if True:
-                colorization_test_provider.draw(800, pygame, surf, y_x, display_update=surf==screen)
+                colorization_test_provider.draw(800, pygame, surf, y_x, display_update=surf==screen, max_iters=escape)
             else:
                 for cx in range(w):
                     for cy in range(h):
