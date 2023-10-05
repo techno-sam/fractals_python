@@ -78,7 +78,7 @@ def iters_to_color(iters: int, max_iters: int) -> tuple[int, int, int]:
     key = (iters, max_iters)
     if key in _cache:
         return _cache[key]
-    z = 0.26
+    z = 0.294
     si = (iters / max_iters) ** z
     cos_tmp = math.cos(math.pi * si)
     v = 1.0 - cos_tmp * cos_tmp
@@ -104,6 +104,7 @@ log_2 = math.log(2)
 def color_counts(iters: int, fx: float, fy: float, x: int, y: int, counts: dict[int, int], total_count: int, max_iters: int) -> tuple[int, int, int]:
     if iters == -1:
         return 0, 0, 0
+    iters = max_iters - iters
 
     if True: # histogram mode
         '''SIZE = 360

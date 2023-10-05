@@ -21,6 +21,7 @@ f(f(f(0)))
 
 """
 import math
+import random
 import time
 
 import pygame
@@ -39,6 +40,12 @@ zoom = (-2.5, -2, 1.5, 2)  # tuple of min and max coords
 # zoom = (-0.7746269311970281, 0.12415248501499525, -0.7746269311875639, 0.1241524850244594)
 orig_zoom = zoom
 zoom_stack = Deque()
+
+_choices = list(range(800))
+random_order = []
+while len(_choices) > 0:
+    idx = random.randrange(0, len(_choices))
+    random_order.append(_choices.pop(idx))
 
 
 def map_pixel(x: int, y: int, width: int, height: int, zoom_bounds: tuple[float, float, float, float]) -> tuple[float, float]:
@@ -227,7 +234,16 @@ def draw(zoom_coords: tuple[float]|list[float], surf: pygame.Surface, w: int = 8
                 pygame.display.update()
         print("Done")
     else:
-        if __name__ == "__main__" and False:
+        if True:
+            for y_idx in range(h):
+                cy = random_order[y_idx]
+                for cx in range(w):
+                    mx_, my_ = map_pixel(cx, cy, w, h, zoom_coords)
+                    iters_, fx_, fy_ = point(mx_, my_, escape)
+                    surf.set_at((cx, cy), colorization_test_provider.color_counts(iters_, fx_, fy_, cx, cy, {}, 0, escape))
+                if y_idx % 10 == 0 and surf == screen:
+                    pygame.display.update()
+        elif __name__ == "__main__" and False:
             for cx in range(w):
                 for cy in range(h):
                     surf.set_at((cx, cy), color(cx, cy, zoom_coords, escape=escape))
@@ -428,6 +444,8 @@ if __name__ == "__main__":
                 elif event.key == pygame.K_MINUS:  # -
                     iter_count /= 10
                     iter_count = int(iter_count)
+                    if iter_count <= 0:
+                        iter_count = 1
                     print(f"New iter count: {iter_count}")
             else:
                 just_juliad = False

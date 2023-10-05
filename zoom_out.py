@@ -1,3 +1,4 @@
+import math
 import os
 import random
 import time
@@ -8,12 +9,13 @@ import time
 (-0.1528374138507328, -1.0400350850739863, -0.15283741385027563, -1.0400350850735292)
 (-1.8112662371017072, -2.3424589762138185e-10, -1.8112662366795607, 1.8790057629187405e-10)
 (-0.7746269311970281, 0.12415248501499525, -0.7746269311875639, 0.1241524850244594)
+(-0.1093015082161154, -0.8949189689356382, -0.10930150821270598, -0.8949189689322287) @ iter=100000
 """
 
-initial_zoom = my_zoom = (-0.7746269311970281, 0.12415248501499525, -0.7746269311875639, 0.1241524850244594)
-initial_escape = my_escape = 10_000
+initial_zoom = my_zoom = (-0.1093015082161154, -0.8949189689356382, -0.10930150821270598, -0.8949189689322287)
+initial_escape = my_escape = math.log10(100_000)
 target_zoom = (-2.5, -2, 1.5, 2)
-target_escape = 1_000
+target_escape = math.log10(1_000)
 from multiprocessing import Pool
 
 
@@ -51,7 +53,7 @@ while (my_zoom[0] - my_zoom[2])**2 + (my_zoom[1] - my_zoom[3])**2 < 25:
     print(f"{my_zoom=}")
     interp_factor = ((frame/600)**16) / 20
     my_zoom = interp_multi(initial_zoom, target_zoom, interp_factor)#[my_zoom[i]+(diff[i] * 0.00000000000001/(abs(0.01*sum(my_zoom))**2)) for i in range(4)]
-    my_escape = int(interp(initial_escape, target_escape, min(1.0, interp_factor*1.2)))
+    my_escape = interp(initial_escape, target_escape, min(1.0, frame/718))
     #print(f"{my_zoom=}")
 
 print(f"Generating {len(zooms)} frames...")
@@ -66,11 +68,12 @@ def generate_frames(frame_set: list[tuple[int, list[float], int]]):
     pygame.init()
     s = pygame.Surface((800, 800))
     for frame_id, z, escape_time in frame_set:
-        print(f"{id_} generating frame {frame_id} with {escape_time=}")
+        esc = int(10**escape_time)
+        print(f"{id_} generating frame {frame_id} with {esc=}")
         s.fill((0, 0, 0))
-        print(f"{id_} filled frame {frame_id} with {escape_time=}")
-        mbrot.draw(z, s, escape=escape_time)
-        print(f"{id_} generated frame {frame_id} with {escape_time=}")
+        print(f"{id_} filled frame {frame_id} with {esc=}")
+        mbrot.draw(z, s, escape=esc)
+        print(f"{id_} generated frame {frame_id} with {esc=}")
         pygame.image.save(s, f"frames/{frame_id:03}.png")
     print(f"Quitting {id_}")
     pygame.quit()
