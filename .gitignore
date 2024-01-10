@@ -163,3 +163,8 @@ cython_debug/
 # Custom
 frames/
 frames_copy/
+/sierpinski_triangle/input.png
+/sierpinski_triangle/output.png
+/sierpinski_triangle/why.png
+/starify/input.png
+/starify/output.png
